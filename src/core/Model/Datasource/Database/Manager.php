@@ -29,13 +29,37 @@ namespace sowerphp\core;
  * Define métodos que deberán ser implementados, clases específicas para
  * la conexión con X base de datos deberán extender esta clase
  */
-abstract class Model_Datasource_Database_Manager extends \PDO
+abstract class Model_Datasource_Database_Manager
 {
     public $config; ///< Configuración de la base de datos
+
+    protected $pdo; ///< Conexión PDO interna. Antes la clase extendía \PDO,
+                    ///< pero desde PHP 8.0 la firma query($sql, $params) es
+                    ///< incompatible con PDO::query() (fatal de carga). La
+                    ///< composición mantiene intactos los call-sites de
+                    ///< $this->db en la aplicación.
 
     protected $inTransaction = 0; ///< Contador de solicitudes de transacciones en curso
 
     public static $querysCount = 0; ///< Indica la cantidad de consultas que se han realizado entre todas las BD
+
+    /**
+     * Crea la conexión PDO interna. Reemplaza los parent::__construct() de
+     * los drivers (PostgreSQL, MySQL, SQLite).
+     */
+    protected function connectPdo($dsn, $user = null, $pass = null, array $options = [])
+    {
+        $this->pdo = new \PDO($dsn, $user, $pass, $options);
+    }
+
+    /**
+     * Proxy a los métodos de PDO que se llamen directo sobre el manager
+     * (lastInsertId, quote, setAttribute, etc.).
+     */
+    public function __call($method, $args)
+    {
+        return $this->pdo->$method(...$args);
+    }
 
     /**
      * Manejador de errores para la base de datos
@@ -65,7 +89,7 @@ abstract class Model_Datasource_Database_Manager extends \PDO
         // contabilizar consulta
         self::$querysCount++;
         // preparar consulta
-        $stmt = $this->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
         if ($stmt === false) {
             $this->error('No fue posible preparar la consulta:'."\n\n".$sql);
         }
@@ -200,7 +224,7 @@ abstract class Model_Datasource_Database_Manager extends \PDO
                 $this->query('SET TRANSACTION ISOLATION LEVEL SERIALIZABLE');
             }
             // iniciar transacción
-            if (parent::beginTransaction()) {
+            if ($this->pdo->beginTransaction()) {
                 // serializar transacción en PostgreSQL
                 if ($serializable && $this->config['type'] == 'PostgreSQL') {
                     $this->query('SET TRANSACTION ISOLATION LEVEL SERIALIZABLE');
@@ -226,7 +250,7 @@ abstract class Model_Datasource_Database_Manager extends \PDO
     {
         if ($this->inTransaction) {
             if ($this->inTransaction == 1) {
-                parent::commit();
+                $this->pdo->commit();
             }
             $this->inTransaction--;
             return true;
@@ -239,7 +263,7 @@ abstract class Model_Datasource_Database_Manager extends \PDO
      */
     public function rollBack()
     {
-        if ($this->inTransaction && parent::rollBack()) {
+        if ($this->inTransaction && $this->pdo->rollBack()) {
             $this->inTransaction = 0;
             return true;
         }
