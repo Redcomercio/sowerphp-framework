@@ -27,6 +27,7 @@ namespace sowerphp\app;
  * Clase abstracta para todos los modelos
  * Permite trabajar con varios registros de una tabla
  */
+#[\AllowDynamicProperties]
 abstract class Model_Plural
 {
     use \sowerphp\core\Trait_Object;

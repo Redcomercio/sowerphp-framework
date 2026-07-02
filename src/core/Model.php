@@ -27,6 +27,7 @@ namespace sowerphp\core;
  * Clase abstracta para todos los modelos
  * Permite trabajar con un registro de la tabla
  */
+#[\AllowDynamicProperties]
 abstract class Model
 {
     use Trait_Object;
