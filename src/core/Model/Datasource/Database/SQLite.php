@@ -44,7 +44,7 @@ class Model_Datasource_Database_SQLite extends Model_Datasource_Database_Manager
         // definir configuración para el acceso a la base de datos
         $this->config = $config;
         // abrir conexión a la base de datos
-        parent::__construct('sqlite:'.$this->config['file']);
+        $this->connectPdo('sqlite:'.$this->config['file']);
     }
 
     /**

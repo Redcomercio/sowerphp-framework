@@ -46,7 +46,7 @@ class Model_Datasource_Database_PostgreSQL extends Model_Datasource_Database_Man
             'pers' => false,
         ], $config);
         // abrir conexión a la base de datos
-        parent::__construct(
+        $this->connectPdo(
             'pgsql:host='.$this->config['host'].
             ';port='.$this->config['port'].
             ';dbname='.$this->config['name'],

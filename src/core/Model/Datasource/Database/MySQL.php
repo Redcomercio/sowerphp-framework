@@ -45,7 +45,7 @@ class Model_Datasource_Database_MySQL extends Model_Datasource_Database_Manager
             'pers' => false,
         ], $config);
         // realizar conexión a la base de datos
-        parent::__construct(
+        $this->connectPdo(
             'mysql:host='.$this->config['host'].
             ';port='.$this->config['port'].
             ';dbname='.$this->config['name'].
