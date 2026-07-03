@@ -31,7 +31,7 @@
  * @return mixed La instancia del servicio solicitado o la instancia de
  * la clase contenedora.
  */
-function app(string $key = null, array $parameters = [])
+function app(?string $key = null, array $parameters = [])
 {
     $instance = \sowerphp\core\App::getInstance();
     if ($key === null) {

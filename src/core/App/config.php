@@ -25,7 +25,7 @@ return [
 
     // Errores.
     'debug' => true,
-    'error.level' => E_ALL & ~E_DEPRECATED & ~E_STRICT,
+    'error.level' => E_ALL & ~E_DEPRECATED,
     'error.exception' => true,
 
     // Tiempo.

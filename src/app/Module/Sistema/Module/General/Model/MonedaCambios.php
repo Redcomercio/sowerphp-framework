@@ -79,7 +79,7 @@ class Model_MonedaCambios extends \Model_Plural_App
      * Método que busca los valores de varias monedas al mismo tiempo para un
      * rango de días determinados
      */
-    public function getValores($monedas, $fecha_desde = null, $fecha_hasta)
+    public function getValores($monedas, $fecha_desde = null, $fecha_hasta = null)
     {
         if (!$monedas) {
             return [];

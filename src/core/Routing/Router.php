@@ -219,7 +219,7 @@ class Routing_Router
      * @param string $module Nombre del módulo (ejemplo: Nombre.De.ModuloQueSeEjecuta)
      * @return array Parámetros para despachar la página estática o false si no se encontró una
      */
-    private static function parseStaticPage(string $url, string $module = null)
+    private static function parseStaticPage(string $url, ?string $module = null)
     {
         $location = View::location('Pages'.$url, $module);
         if ($location) {
