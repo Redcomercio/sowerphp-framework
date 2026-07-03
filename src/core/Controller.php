@@ -26,6 +26,7 @@ namespace sowerphp\core;
 /**
  * Clase base para los controladores de la aplicación
  */
+#[\AllowDynamicProperties]
 abstract class Controller
 {
     public $request; ///< Objeto Request
