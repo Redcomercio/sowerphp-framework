@@ -45,6 +45,11 @@ class Network_Email_Imap
      */
     public function __construct(array $config)
     {
+        if (!function_exists('imap_open')) {
+            throw new \Exception(
+                'La extensión IMAP de PHP no está disponible en este servidor.'
+            );
+        }
         if (!isset($config['mailbox'])) {
             // definir puerto si no se pasó
             if (!isset($config['port']) && isset($config['ssl']) && !$config['ssl']) {
