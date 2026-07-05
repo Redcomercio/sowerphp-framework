@@ -81,13 +81,18 @@ class Controller_Component_Log extends \sowerphp\core\Controller_Component
     public function afterFilter($url = null, $status = null)
     {
         if (get_class($this->controller) == 'sowerphp\core\Controller_Error') {
+            // viewVars puede no traer todas las claves cuando el error no es una
+            // excepción (p.ej. 404/403/508 que renderizan Controller_Error sin
+            // objeto exception). En PHP 8+ acceder a una clave inexistente emite
+            // un Warning ("Undefined array key"), a diferencia del Notice de 7.4.
+            $vars = $this->controller->viewVars;
             $message = [
-                'exception' => $this->controller->viewVars['exception'],
-                'message' => $this->controller->viewVars['message'],
-                'trace' => $this->controller->viewVars['trace'],
-                'code' => $this->controller->viewVars['code'],
+                'exception' => $vars['exception'] ?? null,
+                'message' => $vars['message'] ?? null,
+                'trace' => $vars['trace'] ?? null,
+                'code' => $vars['code'] ?? null,
             ];
-            $this->report($message, [0, $this->controller->viewVars['severity']]);
+            $this->report($message, [0, $vars['severity'] ?? LOG_ERR]);
         }
     }
 
@@ -182,6 +187,13 @@ class Controller_Component_Log extends \sowerphp\core\Controller_Component
         if (is_array($message)) {
             if (isset($message['exception']) && isset($message['message']) && isset($message['code'])) {
                 $message = '['.$message['code'].'] '.$message['exception'].' "'.$message['message'].'"';
+            } else {
+                // Fallback cuando el arreglo no trae todos los campos (error sin
+                // excepción). Sin esto $message seguía siendo arreglo y la
+                // concatenación de más abajo emitía "Array to string conversion".
+                $message = '['.($message['code'] ?? 0).'] '
+                    . ($message['exception'] ?? get_class($this->controller))
+                    . ' "'.($message['message'] ?? '').'"';
             }
         } else {
             $message = '['.$this->getFacility($facility).'.'.$this->getSeverity($severity).'] '.get_class($this->controller).' "'.$message.'"';
