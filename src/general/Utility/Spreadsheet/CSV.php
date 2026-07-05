@@ -40,7 +40,7 @@ final class Utility_Spreadsheet_CSV
         if (($handle = fopen($archivo, 'r')) !== false) {
             $data = [];
             $i = 0;
-            while (($row = fgetcsv($handle, 0, $delimiter, $enclosure)) !== false) {
+            while (($row = fgetcsv($handle, 0, $delimiter, $enclosure, '\\')) !== false) {
                 $j = 0;
                 foreach ($row as &$col) {
                     $data[$i][$j++] = $col;
@@ -107,7 +107,7 @@ final class Utility_Spreadsheet_CSV
             foreach ($row as &$col) {
                 $col = rtrim(str_replace(['<br />', '<br/>', '<br>'], ', ', strip_tags($col, '<br>')), " \t\n\r\0\x0B,");
             }
-            fputcsv($fd, $row, $delimiter, $enclosure);
+            fputcsv($fd, $row, $delimiter, $enclosure, '\\');
             unset($row);
         }
         if ($close) {
