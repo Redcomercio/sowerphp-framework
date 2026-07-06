@@ -105,7 +105,7 @@ final class Utility_Spreadsheet_CSV
         }
         foreach ($data as &$row) {
             foreach ($row as &$col) {
-                $col = rtrim(str_replace(['<br />', '<br/>', '<br>'], ', ', strip_tags($col, '<br>')), " \t\n\r\0\x0B,");
+                $col = rtrim(str_replace(['<br />', '<br/>', '<br>'], ', ', strip_tags((string)$col, '<br>')), " \t\n\r\0\x0B,");
             }
             fputcsv($fd, $row, $delimiter, $enclosure, '\\');
             unset($row);
