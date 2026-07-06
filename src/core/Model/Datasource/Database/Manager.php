@@ -43,6 +43,8 @@ abstract class Model_Datasource_Database_Manager
 
     public static $querysCount = 0; ///< Indica la cantidad de consultas que se han realizado entre todas las BD
 
+    protected static $cursorsCount = 0; ///< Contador para nombres únicos de cursores server-side
+
     /**
      * Crea la conexión PDO interna. Reemplaza los parent::__construct() de
      * los drivers (PostgreSQL, MySQL, SQLite).
@@ -183,6 +185,58 @@ abstract class Model_Datasource_Database_Manager
             yield $row;
         }
         $stmt->closeCursor();
+    }
+
+    /**
+     * Igual que getTableGenerator() pero con un cursor del lado del servidor
+     * de PostgreSQL (DECLARE ... FETCH FORWARD por lotes).
+     *
+     * getTableGenerator() NO hace streaming real de memoria: pdo_pgsql/libpq
+     * descarga el resultset COMPLETO a la memoria C del proceso antes de que
+     * execute() retorne, y el yield solo pagina sobre ese buffer ya
+     * residente. Con datasets grandes (>1M filas) eso infla el RSS del
+     * proceso en cientos de MB. Con el cursor solo vive un lote de
+     * $batchSize filas a la vez en memoria (~O(1)).
+     *
+     * Corre dentro de una transacción (requisito de los cursores): se abre
+     * una si no hay activa y se libera al terminar el generator, incluso si
+     * el consumidor lo abandona a medias (el finally corre al destruirse el
+     * generator). En motores distintos de PostgreSQL cae de vuelta a
+     * getTableGenerator().
+     * @param sql Consulta SQL que se desea realizar
+     * @param params Parámetros que se deben enlazar a la consulta
+     * @param batchSize Filas por FETCH FORWARD (lote residente en memoria)
+     * @return \Generator
+     */
+    public function getTableGeneratorCursor($sql, $params = [], $batchSize = 5000)
+    {
+        if ($this->config['type'] != 'PostgreSQL') {
+            yield from $this->getTableGenerator($sql, $params);
+            return;
+        }
+        $cursor = 'sowerphp_cursor_' . (++self::$cursorsCount);
+        $this->beginTransaction();
+        $committed = false;
+        try {
+            $this->query('DECLARE ' . $cursor . ' NO SCROLL CURSOR FOR ' . $sql, $params);
+            do {
+                $stmt = $this->query('FETCH FORWARD ' . (int)$batchSize . ' FROM ' . $cursor);
+                $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+                $stmt->closeCursor();
+                foreach ($rows as $row) {
+                    yield $row;
+                }
+            } while (count($rows) == $batchSize);
+            $this->query('CLOSE ' . $cursor);
+            $this->commit();
+            $committed = true;
+        } finally {
+            if (!$committed) {
+                // error o generator abandonado: liberar la transacción (solo
+                // lectura, el rollback es inocuo y cierra el cursor)
+                $this->rollBack();
+            }
+        }
     }
 
     /**
