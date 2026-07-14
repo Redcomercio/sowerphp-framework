@@ -31,6 +31,8 @@ abstract class Utility_Apps_Base_Apps
 {
     protected $nombre = null; ///< Nombre de la aplicación
 
+    protected $codigo = null; ///< Código de la aplicación (derivado del nombre de la clase)
+
     protected $activa = false; ///< Indica si la aplicación está activa (disponible para ser usada en la aplicación web)
 
     protected $config; ///< Configuración de la aplicación
