@@ -340,6 +340,33 @@ class View_Helper_Form
         return $buffer;
     }
 
+    /**
+     * Campo de hora.
+     *
+     * Usa el input nativo del navegador, que ya trae su propio selector, en
+     * vez del datepicker por JavaScript que usa _input_date(): para la hora no
+     * hace falta y el nativo funciona igual en el teléfono.
+     *
+     * Se agrega step="1" salvo que quien llama indique otro, porque sin eso el
+     * navegador ofrece solo horas y minutos. Los documentos tributarios piden
+     * la hora con segundos (HH:MM:SS), así que ese es el valor que sirve por
+     * defecto.
+     */
+    private function _input_time($config)
+    {
+        $attr = '';
+        if (isset($config['id'])) {
+            $attr .= ' id="'.$config['id'].'"';
+        }
+        if (strpos($config['attr'], 'step=') === false) {
+            $attr .= ' step="1"';
+        }
+
+        return '<input type="time" name="'.$config['name'].'" value="'.$config['value'].'"'
+            .$attr.' class="'.$config['class'].'" '.$config['attr'].$config['popover'].' />'
+        ;
+    }
+
     private function _input_textarea($config)
     {
         $config = array_merge(
